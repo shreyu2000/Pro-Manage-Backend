@@ -1,7 +1,7 @@
 const express =  require('express');
 const app =  express();
 const cors =  require('cors');
-const connectDB = require('./db/connect.js')
+const connectDB = require('./db/dbconnect.js')
 require('dotenv').config();
 
 //database connection
@@ -26,6 +26,9 @@ app.get("/api/v1/health" ,(req,res)=>{
 })
 
 //routers
+const userRoutes = require('./routes/user.routes.js');
+
+app.use("/api/v1/users", userRoutes);
 
 
 
@@ -33,4 +36,5 @@ const PORT = process.env.PORT || 4000;
 app.listen( PORT ,()=>{
     console.log(`Server is running on port ${PORT}`);
 })
+
 
