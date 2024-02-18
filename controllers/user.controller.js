@@ -20,7 +20,6 @@ const registerUser = async (req, res) => {
         const newUser = new User({ name, email, password: hashedPassword });
         await newUser.save();
 
-        // const user = await User.findById(newUser._id).select("-password");
 
         // Generate JWT token
         const token = generateAccessToken(newUser);
@@ -73,5 +72,40 @@ const generateAccessToken = (user) => {
     );
 };
 
-module.exports = { registerUser, loginUser };
+const updateUserSettings = async (req, res) => {
+    try {
+        const { newName, oldPassword, newPassword } = req.body;
+        const userId = req.user._id;
+
+        // Find the user by ID
+        const user = await User.findById(userId);
+
+        // Check if the provided old password matches the user's current password
+        const isPasswordValid = await bcrypt.compare(oldPassword, user.password);
+        if (!isPasswordValid) {
+            return ApiResponse(res, 400, 'Old password is incorrect');
+        }
+
+        // Update the user's name if a new name is provided
+        if (newName) {
+            user.name = newName;
+        }
+
+        // Update the user's password if a new password is provided
+        if (newPassword) {
+            user.password = await bcrypt.hash(newPassword, 10);
+        }
+
+        // Save the updated user object
+        await user.save();
+
+        return ApiResponse(res, 200, 'User settings updated successfully');
+    } catch (error) {
+        console.error('Error updating user settings:', error);
+        return ApiResponse(res, 500, 'Internal server error');
+    }
+};
+
+
+module.exports = { registerUser, loginUser ,updateUserSettings};
 

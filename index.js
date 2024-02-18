@@ -27,9 +27,10 @@ app.get("/api/v1/health" ,(req,res)=>{
 
 //routers
 const userRoutes = require('./routes/user.routes.js');
+const taskRoutes = require('./routes/task.routes.js');
 
 app.use("/api/v1/users", userRoutes);
-
+app.use("/api/v1/tasks" ,taskRoutes);
 
 
 const PORT = process.env.PORT || 4000;
