@@ -1,17 +1,16 @@
 const Task = require('../models/tasks.model.js');
 const ApiResponse = require('../utils/ApiResponse');
 
-//CRUD 
-
-// Controller function to create a new task
+// Create a new task
 const createTask = async (req, res) => {
     try {
         const { title, priority, dueDate, checklist } = req.body;
+        const userId = req.user._id;
 
-        // Create a new task with default column status as 'To Do'
-        const newTask = new Task({ title, priority, dueDate, checklist ,column: 'To Do' });
+        // Create task with default column state 'To Do'
+        const newTask = new Task({ title, priority, dueDate, checklist, column: 'To Do', user: userId });
         await newTask.save();
-
+        
         ApiResponse(res, 201, 'Task created successfully', newTask);
     } catch (error) {
         console.error('Error creating task:', error);
@@ -19,35 +18,30 @@ const createTask = async (req, res) => {
     }
 };
 
-// Controller function to update the column status of a task
-const updateTaskColumn = async (req, res) => {
+// Get all tasks for a user
+const getAllTasks = async (req, res) => {
     try {
-        const taskId = req.params.id;
-        const newColumn = req.body.column; // Assuming the column name is provided in the request body
-
-        // Find the task by ID and update its column status
-        const updatedTask = await Task.findByIdAndUpdate(taskId, { column: newColumn }, { new: true });
-
-        if (!updatedTask) {
-            return ApiResponse(res, 404, 'Task not found');
-        }
-
-        ApiResponse(res, 200, 'Task column updated successfully', updatedTask);
+        const userId = req.user._id;
+        const tasks = await Task.find({ user: userId });
+        ApiResponse(res, 200, 'Tasks fetched successfully', tasks);
     } catch (error) {
-        console.error('Error updating task column:', error);
+        console.error('Error fetching tasks:', error);
         ApiResponse(res, 500, 'Internal server error');
     }
 };
 
-
-// Controller function to edit a task
-const editTask = async (req, res) => {
+// Update a task
+const updateTask = async (req, res) => {
     try {
         const taskId = req.params.id;
         const { title, priority, dueDate, checklist } = req.body;
-
+        
         // Find the task by ID and update its properties
-        const updatedTask = await Task.findByIdAndUpdate(taskId, { title, priority, dueDate, checklist}, { new: true });
+        const updatedTask = await Task.findByIdAndUpdate(
+            taskId,
+            { title, priority, dueDate, checklist }, // Exclude 'column' from the update object
+            { new: true }
+        );
 
         if (!updatedTask) {
             return ApiResponse(res, 404, 'Task not found');
@@ -60,7 +54,7 @@ const editTask = async (req, res) => {
     }
 };
 
-// Controller function to delete a task
+// Delete a task
 const deleteTask = async (req, res) => {
     try {
         const taskId = req.params.id;
@@ -79,57 +73,35 @@ const deleteTask = async (req, res) => {
     }
 };
 
-
-
-
-
-// Controller function to filter tasks created today
-const filterTasksCreatedToday = async (req, res) => {
+// Update column state of a task
+const updateTaskColumn = async (req, res) => {
     try {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Set time to beginning of the day
-        const tasks = await Task.find({ createdAt: { $gte: today } });
-        ApiResponse(res, 200, 'Tasks filtered successfully', tasks);
+        const { taskId } = req.params;
+        const { column } = req.body;
+        const userId = req.user._id;
+
+        // Validate user ownership of the task before updating
+        const task = await Task.findOne({ _id: taskId, user: userId });
+        if (!task) {
+            return ApiResponse(res, 404, 'Task not found');
+        }
+
+        // Update the column state of the task
+        task.column = column;
+        await task.save();
+
+        ApiResponse(res, 200, 'Task column state updated successfully', task);
     } catch (error) {
-        console.error('Error filtering tasks created today:', error);
+        console.error('Error updating task column state:', error);
         ApiResponse(res, 500, 'Internal server error');
     }
 };
 
-// Controller function to filter tasks created this week
-const filterTasksCreatedThisWeek = async (req, res) => {
-    try {
-        const startOfWeek = new Date();
-        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay()); // Set to Sunday of the current week
-        startOfWeek.setHours(0, 0, 0, 0); // Set time to beginning of the day
-        const tasks = await Task.find({ createdAt: { $gte: startOfWeek } });
-        ApiResponse(res, 200, 'Tasks filtered successfully', tasks);
-    } catch (error) {
-        console.error('Error filtering tasks created this week:', error);
-        ApiResponse(res, 500, 'Internal server error');
-    }
-};
-
-// Controller function to filter tasks created this month
-const filterTasksCreatedThisMonth = async (req, res) => {
-    try {
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1); // Set to the first day of the current month
-        startOfMonth.setHours(0, 0, 0, 0); // Set time to beginning of the day
-        const tasks = await Task.find({ createdAt: { $gte: startOfMonth } });
-        ApiResponse(res, 200, 'Tasks filtered successfully', tasks);
-    } catch (error) {
-        console.error('Error filtering tasks created this month:', error);
-        ApiResponse(res, 500, 'Internal server error');
-    }
-};
 
 module.exports = {
-    createTask,
-    editTask,
-    deleteTask,
     updateTaskColumn,
-    filterTasksCreatedToday,
-    filterTasksCreatedThisWeek,
-    filterTasksCreatedThisMonth
+    createTask,
+    getAllTasks,
+    updateTask,
+    deleteTask
 };

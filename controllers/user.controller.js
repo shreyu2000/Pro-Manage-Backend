@@ -104,8 +104,32 @@ const updateUserSettings = async (req, res) => {
         console.error('Error updating user settings:', error);
         return ApiResponse(res, 500, 'Internal server error');
     }
+}
+
+const fetchUserData = async (req, res) => {
+  try {
+    const userId = req.user._id; // Assuming the user ID is stored in req.user._id after authentication
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return ApiResponse(res, 404, 'User not found');
+    }
+
+    // Return user data excluding sensitive information like password
+    const userData = {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+    };
+
+    ApiResponse(res, 200, 'User data retrieved successfully', userData);
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    ApiResponse(res, 500, 'Internal server error');
+  }
 };
 
 
-module.exports = { registerUser, loginUser ,updateUserSettings};
+
+module.exports = { registerUser, loginUser ,updateUserSettings ,fetchUserData };
 
