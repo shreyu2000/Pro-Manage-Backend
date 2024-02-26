@@ -7,7 +7,7 @@ const taskSchema = new mongoose.Schema({
     },
     priority: {
         type: String,
-        enum: ['Low', 'Moderate', 'High'],
+        enum: ['LOW', 'MODERATE', 'HIGH'],
         required: true
     },
     dueDate: {
@@ -25,7 +25,7 @@ const taskSchema = new mongoose.Schema({
     }],
     column: {
         type: String,
-        enum: ['Backlog', 'To Do', 'In Progress', 'Done'],
+        enum: ['BACKLOG', 'TO-DO', 'PROGRESS', 'DONE'],
         default: 'To Do'
     },
     user: {

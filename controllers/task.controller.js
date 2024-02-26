@@ -8,7 +8,7 @@ const createTask = async (req, res) => {
         const userId = req.user._id;
 
         // Create task with default column state 'To Do'
-        const newTask = new Task({ title, priority, dueDate, checklist, column: 'To Do', user: userId });
+        const newTask = new Task({ title, priority, dueDate, checklist, column: 'TO-DO', user: userId });
         await newTask.save();
         
         ApiResponse(res, 201, 'Task created successfully', newTask);
