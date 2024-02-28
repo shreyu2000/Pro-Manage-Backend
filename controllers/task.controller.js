@@ -97,11 +97,84 @@ const updateTaskColumn = async (req, res) => {
     }
 };
 
+// Get a task by ID
+const getTaskById = async (req, res) => {
+    try {
+        const taskId = req.params.id;
+        const userId = req.user._id;
+
+        // Find the task by ID and user ID
+        const task = await Task.findOne({ _id: taskId, user: userId });
+
+        if (!task) {
+            return ApiResponse(res, 404, 'Task not found');
+        }
+
+        ApiResponse(res, 200, 'Task fetched successfully', task);
+    } catch (error) {
+        console.error('Error fetching task by ID:', error);
+        ApiResponse(res, 500, 'Internal server error');
+    }
+};
+
+
+//filter tasks 
+// Get tasks filtered by creation date
+const getTasksByFilter = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { filter } = req.params;
+        const currentDate = new Date();
+
+        let startDate, endDate;
+
+        // Calculate start and end dates based on the filter
+        switch (filter) {
+            case 'today':
+                startDate = new Date(currentDate);
+                startDate.setHours(0, 0, 0, 0); // Set to beginning of the day
+                endDate = new Date(currentDate);
+                endDate.setHours(23, 59, 59, 999); // Set to end of the day
+                break;
+            case 'thisWeek':
+                // Calculate start date of the week (Sunday)
+                startDate = new Date(currentDate);
+                startDate.setDate(startDate.getDate() - startDate.getDay());
+                startDate.setHours(0, 0, 0, 0); // Set to beginning of the day
+                // Calculate end date of the week (Saturday)
+                endDate = new Date(currentDate);
+                endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
+                endDate.setHours(23, 59, 59, 999); // Set to end of the day
+                break;
+            case 'thisMonth':
+                startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                startDate.setHours(0, 0, 0, 0); // Set to beginning of the day
+                endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                endDate.setHours(23, 59, 59, 999); // Set to end of the day
+                break;
+            default:
+                return ApiResponse(res, 400, 'Invalid filter');
+        }
+
+        // Fetch tasks filtered by creation date
+        const tasks = await Task.find({
+            user: userId,
+            createdAt: { $gte: startDate, $lte: endDate }
+        });
+
+        ApiResponse(res, 200, 'Tasks fetched successfully', tasks);
+    } catch (error) {
+        console.error('Error fetching tasks by creation date:', error);
+        ApiResponse(res, 500, 'Internal server error');
+    }
+};
 
 module.exports = {
     updateTaskColumn,
     createTask,
     getAllTasks,
     updateTask,
-    deleteTask
+    deleteTask,
+    getTaskById,
+    getTasksByFilter
 };

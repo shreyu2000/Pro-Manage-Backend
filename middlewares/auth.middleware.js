@@ -20,7 +20,6 @@ const authMiddleware = async (req, res, next) => {
     if (!user) {
       return ApiResponse(res, 401, 'Unauthorized - Invalid token');
     }
-
     req.user = user;
     next();
   } catch (error) {
