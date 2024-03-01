@@ -18,17 +18,6 @@ const createTask = async (req, res) => {
     }
 };
 
-// Get all tasks for a user
-const getAllTasks = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const tasks = await Task.find({ user: userId });
-        ApiResponse(res, 200, 'Tasks fetched successfully', tasks);
-    } catch (error) {
-        console.error('Error fetching tasks:', error);
-        ApiResponse(res, 500, 'Internal server error');
-    }
-};
 
 // Update a task
 const updateTask = async (req, res) => {
@@ -172,7 +161,6 @@ const getTasksByFilter = async (req, res) => {
 module.exports = {
     updateTaskColumn,
     createTask,
-    getAllTasks,
     updateTask,
     deleteTask,
     getTaskById,
